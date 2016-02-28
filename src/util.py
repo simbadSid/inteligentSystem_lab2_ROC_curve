@@ -39,3 +39,17 @@ def biggestValue(a, b):
         return a
     else:
         return b
+
+# build a list with a linear progression from the min to the max
+def buildLinearList(min, max, nbrElem):
+    res     = [0.0 for i in xrange(nbrElem)]
+    min     = min
+    max     = max
+    delta   = (float(max) - float(min) + 1.) / float(nbrElem)
+    for i in xrange(nbrElem/2):
+        res[i]              = min
+        res[nbrElem-i-1]    = max
+        max                 -= delta
+        min                 += delta
+    return res
+
