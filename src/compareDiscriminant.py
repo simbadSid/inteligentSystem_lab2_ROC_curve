@@ -17,7 +17,7 @@ def buildROC(pbInstance, discriminant, truePositiveRate, falsePositiveRate):
         nbrTruePositive     = 0.
         nbrFalsePositive    = 0.
         for sample in xrange(pbInstance.getNbrSample()):
-            biasedObservation = observation[sample] + bias
+            biasedObservation   = observation[sample] + bias
             realValue           = pbInstance.getTrainingSampleValue(sample)
             if (biasedObservation <= 0):
                 nbrNegative += 1
@@ -27,22 +27,22 @@ def buildROC(pbInstance, discriminant, truePositiveRate, falsePositiveRate):
                     nbrTruePositive += 1
                 else:
                     nbrFalsePositive+= 1
-                    
         print "Nbr positive       = " + str(nbrPositive)
         print "Nbr negative       = " + str(nbrNegative)
         print "Nbr true positive  = " + str(nbrTruePositive)
         print "Nbr false positive = " + str(nbrFalsePositive)
-        print "------------------------------------------"
-        if (nbrPositive == 0):
-            truePositiveRate[count]     = None
-        else :
+        if ((nbrPositive > 0) and (nbrNegative > 0)):
             truePositiveRate[count]     = nbrTruePositive / nbrPositive
-        if (nbrNegative == 0):
-            falsePositiveRate[count]    = None
-        else:
             falsePositiveRate[count]    = nbrFalsePositive / nbrNegative
-        count += 1
-
+            print "True positive Rate = " + str(truePositiveRate[count])
+            print "False positive Rate= " + str(falsePositiveRate[count])
+            count += 1
+        else:
+            print "Unprinted point"
+        print "---------------------------------"
+    for i in range(count, len(pbInstance.getBiasList())):
+        truePositiveRate[i]     = None
+        falsePositiveRate[i]    = None
 
 def printROC(falsePositiveRate, truePositiveRate, discriminant):
     plt.plot(falsePositiveRate, truePositiveRate, 'bo-', label='ROC curve with discriminant =  ' + str(discriminant))
@@ -71,10 +71,11 @@ if __name__ == "__main__":
     printBiasList(pbInstance)
 
     for discriminant in pbInstance.discriminantFunction:
-        truePositiveRate    = [i for i in xrange(pbInstance.getNbrBias())]
-        falsePositiveRate   = [i for i in xrange(pbInstance.getNbrBias())]
+        truePositiveRate    = [0 for i in xrange(pbInstance.getNbrBias())]
+        falsePositiveRate   = [0 for i in xrange(pbInstance.getNbrBias())]
         buildROC(pbInstance, discriminant, truePositiveRate, falsePositiveRate)
         printROC(falsePositiveRate, truePositiveRate, discriminant)
+        print "*********************************************"
 
 
 

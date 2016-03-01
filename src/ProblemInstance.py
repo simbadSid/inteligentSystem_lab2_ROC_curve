@@ -1,5 +1,6 @@
 from array import array
 from util import *
+import math
 from matplotlib.mathtext import DELTA
 
 
@@ -19,7 +20,7 @@ class ProblemInstance:
     # -----------------------------
     # Builder
     # -----------------------------
-    def parseProblemInstance(self, inputFileName = "../resource/input/parameter.txt"):
+    def parseProblemInstance(self, normalize=True, inputFileName = "../resource/input/parameter.txt"):
         file = open(inputFileName)
 
         nbrBias = int(nextMeaningLine(file))
@@ -36,8 +37,12 @@ class ProblemInstance:
         self.trainingSample_feature = [[0.0 for i in xrange(featureDimension)] for j in xrange(nbrSamples)]
         for sample in xrange(nbrSamples):
             self.trainingSample_result[sample] = int(nextMeaningLine(file))
+            norm = 0.
             for feature in xrange(featureDimension):
                 self.trainingSample_feature[sample][feature] = int(nextMeaningLine(file))
+                norm += self.trainingSample_feature[sample][feature] ** 2
+            if (normalize == True):
+                vectorTimeScallar(self.trainingSample_feature[sample], (1/math.sqrt(norm)))
 
         # Init discriminante
         nbrDiscriminant             = int(nextMeaningLine(file))
