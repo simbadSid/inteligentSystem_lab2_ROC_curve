@@ -52,6 +52,10 @@ def printROC(falsePositiveRate, truePositiveRate, discriminant):
     plt.legend()
     plt.show()
 
+def printParameters(pbInstance, discriminant):
+# TODO
+    print "TODO"
+
 def printBiasList(pbInstance):
     axis = [i for i in xrange(pbInstance.getNbrBias())]
 
@@ -63,7 +67,21 @@ def printBiasList(pbInstance):
     plt.show()
 
 
+def plotSampleAndDiscriminant(pbInstance, discriminant):
+    sortedSamples = pbInstance.getSortedSample()
+    plt.plot(sortedSamples[0][0], sortedSamples[0][1], 'g^', label='Positive samples')
+    plt.plot(sortedSamples[1][0], sortedSamples[1][1], 'bo',  label='Negative samples')
+    ###### TODO print discriminant
+    plt.grid()
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.legend()
+    plt.show()
+
 if __name__ == "__main__":
+
+    
+    
     pbInstance      = ProblemInstance()
     pbInstance.parseProblemInstance()
 
@@ -71,6 +89,8 @@ if __name__ == "__main__":
     printBiasList(pbInstance)
 
     for discriminant in pbInstance.discriminantFunction:
+        printParameters(pbInstance, discriminant)
+        plotSampleAndDiscriminant(pbInstance, discriminant)
         truePositiveRate    = [0 for i in xrange(pbInstance.getNbrBias())]
         falsePositiveRate   = [0 for i in xrange(pbInstance.getNbrBias())]
         buildROC(pbInstance, discriminant, truePositiveRate, falsePositiveRate)

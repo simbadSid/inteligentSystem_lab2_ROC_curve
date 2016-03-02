@@ -12,9 +12,10 @@ class ProblemInstance:
     # Attributes
     # -----------------------------
     """
-    trainingSample_feature  = [[]]        # Lecture notation: X:
-    trainingSample_result   = [[]]        # Lecture notation: Y
-    discriminantFunction    = [[]]        # Lecture notation: W
+    trainingSample_featureNegative  = [[]]        # Lecture notation: X (partial set):
+    trainingSample_featurePositive  = [[]]        # Lecture notation: X (partial set):
+    trainingSample_feature          = [[]]        # Lecture notation: X (total set):
+    discriminantFunction            = [[]]        # Lecture notation: W
     """
 
     # -----------------------------
@@ -31,13 +32,14 @@ class ProblemInstance:
         self.biasList = buildLinearList(minBias, maxBias, nbrBias)
 
         # Init feature samples
-        nbrSamples                  = int(nextMeaningLine(file))
-        featureDimension            = int(nextMeaningLine(file))
-        self.trainingSample_result  = [0.0 for i in xrange(nbrSamples)]
-        self.trainingSample_feature = [[0.0 for i in xrange(featureDimension)] for j in xrange(nbrSamples)]
+        nbrSamples                          = int(nextMeaningLine(file))
+        featureDimension                    = int(nextMeaningLine(file))
+        self.trainingSample_feature         = []
+        self.trainingSample_featurePositive = []
+        self.trainingSample_featureNegative = []
         for sample in xrange(nbrSamples):
-            self.trainingSample_result[sample] = int(nextMeaningLine(file))
-            norm = 0.
+            y       = int(nextMeaningLine(file))
+            norm    = 0.
             for feature in xrange(featureDimension):
                 self.trainingSample_feature[sample][feature] = int(nextMeaningLine(file))
                 norm += self.trainingSample_feature[sample][feature] ** 2
@@ -84,6 +86,18 @@ class ProblemInstance:
     def getBiasList(self):
         return self.biasList
 
+    def getSortedSample(self):
+        positiveSampleX = []
+        positiveSampleY = []
+        negativeSample = [[] for i in xrange(2)]
+        for sample in xrange(self.getNbrSample()):
+            if (self.trainingSample_result[sample] > 0):
+                positiveSample[0].append(self.trainingSample_feature[sample][0])
+                positiveSample[1].append(self.trainingSample_feature[sample][1])
+            else:
+                negativeSample[0].append(self.trainingSample_feature[sample][0])
+                negativeSample[1].append(self.trainingSample_feature[sample][1])
+        return [positiveSample, negativeSample]
 
     # -----------------------------
     # Local methods
