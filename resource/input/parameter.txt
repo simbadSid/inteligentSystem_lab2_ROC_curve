@@ -1,13 +1,4 @@
 
-# number of bias
-9
-
-# bias min
-0
-
-# bias max
-2
-
 # Number of samples
 10
 

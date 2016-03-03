@@ -16,6 +16,7 @@ class ProblemInstance:
     trainingSample_featurePositive  = [[]]        # Lecture notation: X (partial set):
     trainingSample_feature          = [[]]        # Lecture notation: X (total set):
     discriminantFunction            = [[]]        # Lecture notation: W
+    biasList                        = [[]]        # Contains 1 list of bias for each discriminent
     """
 
     # -----------------------------
@@ -23,13 +24,6 @@ class ProblemInstance:
     # -----------------------------
     def parseProblemInstance(self, normalizeData=False, normalizeDiscriminent=False, inputFileName = "../resource/input/parameter.txt"):
         file = open(inputFileName)
-
-        nbrBias = int(nextMeaningLine(file))
-        minBias = int(nextMeaningLine(file))
-        maxBias = int(nextMeaningLine(file))
-        if (maxBias < minBias):
-            raise Exception ("Max bias (" + str(self.maxBias) + ")< min bias (" + str(self.minBias) + ")")
-        self.biasList = buildLinearList(minBias, maxBias, nbrBias)
 
         # Init feature samples
         self.nbrSamples                     = int(nextMeaningLine(file))
@@ -67,8 +61,12 @@ class ProblemInstance:
                 norm += self.discriminantFunction[discriminant][dim] ** 2
             if (normalizeDiscriminent == True):
                 vectorTimeScallar(self.discriminantFunction[discriminant], 1./math.sqrt(norm))
-
         file.close()
+
+        # init Bia list
+        self.biasList = []
+        for discriminant in self.discriminantFunction:
+            self.biasList.append(self.computeBiasList(discriminant))
 
     # -----------------------------
     # Getter
@@ -91,20 +89,38 @@ class ProblemInstance:
     def getNbrDiscriminant(self):
         return len(self.discriminantFunction)
 
+    def getDiscriminant(self, discriminantIndex):
+        return self.discriminantFunction[discriminantIndex]
+
     def getFeatureDimension(self):
         return self.featureDimension
 
-    def getNbrBias(self):
-        return len(self.biasList)
+    def getBiasList(self, discriminantIndex):
+        return self.biasList[discriminantIndex]
 
-    def getMinBias(self):
-        return self.biasList[0]
+    # Return two points of the discriminent: ([x0, x1], [y0, y1])
+    def getDiscriminentExtremPoint(self, discriminant):
+        # Use the training samples to compute the extreme x and y
+        if (discriminant[2] == 0):
+            x0 = -1. * discriminant[0] / discriminant[1]
+            x1 = x0
+            y0 = -1
+            y1 = 5
+        else:
+            x0 = -1.
+            x1 = 5.
+            y0 = -1. * (x0 * discriminant[1] - discriminant[0]) / discriminant[2]
+            y1 = -1. * (x1 * discriminant[1] - discriminant[0]) / discriminant[2]
+        
+        return ([x0, x1], [y0, y1])
 
-    def getMaxBias(self):
-        return self.biasList[len(self.biasList)-1]
-
-    def getBiasList(self):
-        return self.biasList
+    def getDistanceToDiscriminant(self, discriminant, pointX, pointY):
+        a = discriminant[1]
+        b = discriminant[2]
+        c = discriminant[0]
+        numerator   = a * pointX + b * pointY + c
+        denominator = math.sqrt((a **2) + (b **2))
+        return 1. * numerator / denominator
 
     # -----------------------------
     # Local methods
@@ -124,22 +140,31 @@ class ProblemInstance:
             for dim in xrange(self.getFeatureDimension()):
                 res[sample] += X[dim][sample] * discriminant[dim+1]
         return res
+    
+    def computeBiasList(self, discriminant):
+        res = []
+        for i in xrange(self.getNbrPositiveSample()):
+            x = self.trainingSample_featurePositive[0][i]
+            y = self.trainingSample_featurePositive[1][i]
+            d = self.getDistanceToDiscriminant(discriminant, x, y)
+            res.append(d)
+        for i in xrange(self.getNbrNegativeSample()):
+            x = self.trainingSample_featureNegative[0][i]
+            y = self.trainingSample_featureNegative[1][i]
+            d = self.getDistanceToDiscriminant(discriminant, x, y)
+            # insert d in the list by keeping the list sorted and with no doubles
+Ne marche pas
+            if ((i == 0) or (d > res[i-1])):
+                res.append(d)
+                continue
+            for j in xrange(i):
+                if (res[j] == d):
+                    break
+                if (res[j] > d):
+                    print "before: j = " + str(j) + ", list = " + str(res)
+                    res.insert(j, d)
+                    print "after list = " + str(res)
+                    break
+        return res
 
-    def printProblemInstance(self):
-        print "Problem instance:\n"
-        msg = ""
-        print "\t- Number of bias         : " + str(self.getNbrBias())
-        print "\t- Bias min               : " + str(self.getMinBias())
-        print "\t- Bias max               : " + str(self.getMaxBias())
-        print "\t- Number of samples      : " + str(self.getNbrSample())
-        print "\t- Feature dimension      : " + str(self.getFeatureDimension())
-        print "\t- training samples       : "
-        for sample in xrange(self.getNbrSample()):
-            print "\t\t y[" + str(sample) + "]\t = " + str(self.trainingSample_result[sample])
-            print "\t\t X[" + str(sample) + "]\t = " + str(self.trainingSample_feature[sample])
-            print "\t\t ------------------------------"
-        print "\t- Number of discriminant : " + str(self.getNbrDiscriminant())
-        print "\t- Discriminant           : "
-        for discriminant in xrange(self.getNbrDiscriminant()):
-            print "\t\t y[" + str(discriminant) + "]\t = " + str(self.discriminantFunction[discriminant])
-            print "\t\t ------------------------------"
+
