@@ -21,7 +21,7 @@ class ProblemInstance:
     # -----------------------------
     # Builder
     # -----------------------------
-    def parseProblemInstance(self, normalize=True, inputFileName = "../resource/input/parameter.txt"):
+    def parseProblemInstance(self, normalizeData=False, normalizeDiscriminent=False, inputFileName = "../resource/input/parameter.txt"):
         file = open(inputFileName)
 
         nbrBias = int(nextMeaningLine(file))
@@ -32,30 +32,41 @@ class ProblemInstance:
         self.biasList = buildLinearList(minBias, maxBias, nbrBias)
 
         # Init feature samples
-        nbrSamples                          = int(nextMeaningLine(file))
-        featureDimension                    = int(nextMeaningLine(file))
-        self.trainingSample_feature         = []
-        self.trainingSample_featurePositive = []
-        self.trainingSample_featureNegative = []
-        for sample in xrange(nbrSamples):
+        self.nbrSamples                     = int(nextMeaningLine(file))
+        self.featureDimension               = int(nextMeaningLine(file))
+        self.trainingSample_featurePositive = [[] for i in xrange(self.featureDimension)]
+        self.trainingSample_featureNegative = [[] for i in xrange(self.featureDimension)]
+        vect = []
+        for sample in xrange(self.nbrSamples):
             y       = int(nextMeaningLine(file))
             norm    = 0.
-            for feature in xrange(featureDimension):
-                self.trainingSample_feature[sample][feature] = int(nextMeaningLine(file))
-                norm += self.trainingSample_feature[sample][feature] ** 2
-            if (normalize == True):
-                vectorTimeScallar(self.trainingSample_feature[sample], (1/math.sqrt(norm)))
+            if (y > 0):
+                vect = self.trainingSample_featurePositive
+            else:
+                vect = self.trainingSample_featureNegative
+            for dim in xrange(self.featureDimension):
+                xi      = int(nextMeaningLine(file))
+                norm    += xi ** 2
+                (vect[dim]).append(xi)
+            if (normalizeData == True):
+                index = len(vect[0])-1
+                norm = math.sqrt(norm)
+                for dim in xrange(self.featureDimension):
+                    vect[dim][index] /= norm
 
         # Init discriminante
         nbrDiscriminant             = int(nextMeaningLine(file))
         discriminantDimension       = int(nextMeaningLine(file))
-        if (discriminantDimension != featureDimension+1):
+        if (discriminantDimension != self.featureDimension+1):
             raise Exception("Feature and discriminant have unadaptable dimensions")
         self.discriminantFunction   = [[0.0 for j in xrange(discriminantDimension)] for i in xrange(nbrDiscriminant)]
         for discriminant in xrange(nbrDiscriminant):
+            norm = 0
             for dim in xrange(discriminantDimension):
                 self.discriminantFunction[discriminant][dim] = int(nextMeaningLine(file))
-        
+                norm += self.discriminantFunction[discriminant][dim] ** 2
+            if (normalizeDiscriminent == True):
+                vectorTimeScallar(self.discriminantFunction[discriminant], 1./math.sqrt(norm))
 
         file.close()
 
@@ -63,16 +74,25 @@ class ProblemInstance:
     # Getter
     # -----------------------------
     def getNbrSample(self):
-        return len(self.trainingSample_result)
+        return self.nbrSamples
 
-    def getTrainingSampleValue(self, sample):
-        return self.trainingSample_result[sample]
+    def getNbrPositiveSample(self):
+        return len(self.trainingSample_featurePositive[0])
+
+    def getNbrNegativeSample(self):
+        return len(self.trainingSample_featureNegative[0])
+
+    def getPositiveSample(self):
+        return self.trainingSample_featurePositive
+
+    def getNegativeSample(self):
+        return self.trainingSample_featureNegative
 
     def getNbrDiscriminant(self):
         return len(self.discriminantFunction)
 
     def getFeatureDimension(self):
-        return len(self.trainingSample_feature[0])
+        return self.featureDimension
 
     def getNbrBias(self):
         return len(self.biasList)
@@ -86,31 +106,23 @@ class ProblemInstance:
     def getBiasList(self):
         return self.biasList
 
-    def getSortedSample(self):
-        positiveSampleX = []
-        positiveSampleY = []
-        negativeSample = [[] for i in xrange(2)]
-        for sample in xrange(self.getNbrSample()):
-            if (self.trainingSample_result[sample] > 0):
-                positiveSample[0].append(self.trainingSample_feature[sample][0])
-                positiveSample[1].append(self.trainingSample_feature[sample][1])
-            else:
-                negativeSample[0].append(self.trainingSample_feature[sample][0])
-                negativeSample[1].append(self.trainingSample_feature[sample][1])
-        return [positiveSample, negativeSample]
-
     # -----------------------------
     # Local methods
     # -----------------------------
 
-    # Return the list of the scalar product W.X for each feature X
-    def computeObservationList(self, discriminant):
-        res = [0. for i in xrange(self.getNbrSample())]
-        for sample in xrange(self.getNbrSample()):
-            X = self.trainingSample_feature[sample]
+    # Return the list of the scalar product W.X for each feature X such as Y is positive
+    def computeObservationList(self, discriminant, positiveSample):
+        res = [0. for i in xrange(self.getNbrPositiveSample())]
+        if (positiveSample == True):
+            X           = self.getPositiveSample()
+            nbrSample   = self.getNbrPositiveSample()
+        else:
+            X           = self.getNegativeSample()
+            nbrSample   = self.getNbrNegativeSample()
+        for sample in xrange(nbrSample):
             res[sample] = discriminant[0]
-            for dim in xrange(len(X)):
-                res[sample] += X[dim] * discriminant[dim+1]
+            for dim in xrange(self.getFeatureDimension()):
+                res[sample] += X[dim][sample] * discriminant[dim+1]
         return res
 
     def printProblemInstance(self):
