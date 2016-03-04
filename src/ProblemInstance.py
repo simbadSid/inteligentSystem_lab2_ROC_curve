@@ -143,27 +143,24 @@ class ProblemInstance:
     
     def computeBiasList(self, discriminant):
         res = []
-        for i in xrange(self.getNbrPositiveSample()):
-            x = self.trainingSample_featurePositive[0][i]
-            y = self.trainingSample_featurePositive[1][i]
-            d = self.getDistanceToDiscriminant(discriminant, x, y)
-            res.append(d)
-        for i in xrange(self.getNbrNegativeSample()):
-            x = self.trainingSample_featureNegative[0][i]
-            y = self.trainingSample_featureNegative[1][i]
+        sampleX = self.trainingSample_featurePositive[0] + self.trainingSample_featureNegative[0]
+        sampleY = self.trainingSample_featurePositive[1] + self.trainingSample_featureNegative[1]
+        size = 0
+        for i in xrange(len(sampleX)):
+            x = sampleX[i]
+            y = sampleY[i]
             d = self.getDistanceToDiscriminant(discriminant, x, y)
             # insert d in the list by keeping the list sorted and with no doubles
-Ne marche pas
-            if ((i == 0) or (d > res[i-1])):
+            if ((i == 0) or (d > res[size-1])):
                 res.append(d)
+                size += 1
                 continue
-            for j in xrange(i):
+            for j in xrange(size):
                 if (res[j] == d):
                     break
                 if (res[j] > d):
-                    print "before: j = " + str(j) + ", list = " + str(res)
                     res.insert(j, d)
-                    print "after list = " + str(res)
+                    size += 1
                     break
         return res
 
